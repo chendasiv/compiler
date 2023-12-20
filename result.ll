@@ -5,10 +5,10 @@ define i32 @main() {
     %2 = load i32, i32* @x, align 4
     %3 = icmp slt i32 %2, 0
     br i1 %3, label %L0, label %L1
- L0:
+  L0:
     %4 = load i32, i32* @x, align 4
-    br label %L1
- L1:
+    br label %L1 
+  L1:
     %5 = sub nsw i32 0, %4
     store i32 %5, i32* @x, align 4
     %6 = load i32, i32* @x, align 4
