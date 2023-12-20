@@ -265,12 +265,21 @@ def p_assignment_statement(p):
 
     # print("assignment_statement")
 
+#### kadai5 ####
 def p_if_statement(p):
     '''
-    if_statement : IF condition THEN statement else_statement
+    if_statement : IF condition if_act1 THEN statement else_statement
     '''
     # print("if_statement")
 
+def p_if_act1(p):
+    '''
+    if_act1 : 
+    '''
+    cond = p[-1]
+
+
+#### kadai5 ####
 def p_else_statement(p):
     '''
     else_statement : ELSE statement
@@ -278,12 +287,14 @@ def p_else_statement(p):
     '''
     # print("else_statement")
 
+#### kadai5 ####
 def p_while_statement(p):
     '''
     while_statement : WHILE condition DO statement
     '''
     # print("while_statement")
 
+#### kadai5 ####
 def p_for_statement(p):
     '''
     for_statement : FOR IDENT ASSIGN expression for_act1 TO expression DO statement
@@ -300,11 +311,13 @@ def p_for_act1(p):
         print(t.__str__())
     # print("for_statement", p[-3])
 
+
 def p_proc_call_statement(p):
     '''
     proc_call_statement : proc_call_name LPAREN RPAREN
     '''
     # print("proc_call_statement")
+
 
 def p_proc_call_name(p):
     '''
@@ -323,7 +336,6 @@ def p_block_statement(p):
     '''
     # print("block_statement")
 
-#### kadai4 ####
 def p_read_statement(p):
     '''
     read_statement : READ LPAREN IDENT RPAREN
@@ -342,7 +354,6 @@ def p_read_statement(p):
 
     addCode(LLVMCodeCallScanf(getRegister(), ptr))
 
-#### kadai4 ####
 def p_write_statement(p):
     '''
     write_statement : WRITE LPAREN expression RPAREN
@@ -358,6 +369,7 @@ def p_null_statement(p):
     '''
     # print("null")
 
+#### kadai5 ####
 def p_condition(p):
     '''
     condition : expression EQ expression
@@ -369,7 +381,7 @@ def p_condition(p):
     '''
     # print("condition")
 
-#### kadai4 ####
+
 def p_expression(p):
     '''
     expression : term
@@ -402,7 +414,6 @@ def p_expression(p):
             p[0] = retval
 
 
-#### kadai4 ####
 def p_term(p):
     '''
     term : factor
@@ -426,7 +437,6 @@ def p_term(p):
             p[0] = retval
 
 
-#### kadai4 ####
 def p_factor(p):
     '''
     factor : var_name
@@ -438,7 +448,7 @@ def p_factor(p):
     else:
         p[0] = p[2]
 
-#### kadai4 ####
+
 def p_var_name(p):
     '''
     var_name : IDENT
@@ -456,7 +466,7 @@ def p_var_name(p):
     addCode(LLVMCodeLoad(retval, ptr))
     p[0] = retval
 
-#### kadai4 ####
+
 def p_number(p):
     '''
     number : NUMBER
