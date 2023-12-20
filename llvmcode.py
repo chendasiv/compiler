@@ -204,3 +204,53 @@ class LLVMCodeCallScanf(LLVMCode):
     def __str__(self):
         return f"{self.res} = call i32 (i8*, ...) @scanf(i8* getelementptr inbounds ([3 x i8], [3 x i8]* @.str.r, i64 0, i64 0), i32* {self.arg})"
 
+class LLVMCodeIcmp(LLVMCode):
+    ''' icmp 命令
+            {retval} = icmp {cond} i32 {op1}, {op2}
+    '''
+
+    def __init__(self, retval: Operand, cond: CmpType, op1: Operand, op2: Operand):
+        super().__init__()
+        self.retval = retval
+        self.cond = cond
+        self.op1 = op1
+        self.op2 = op2
+
+    def __str__(self):
+        cond_str = self.cond.__str__()
+        return f"{self.retval} = icmp {cond_str} i32 {self.op1}, {self.op2}"
+
+class LLVMCodeBr(LLVMCode):
+    ''' br 命令
+            br label {dest}                       # 無条件分岐
+            br i1 {cond}, label {l1}, label {l2}  # 条件分岐
+    '''
+
+    def __init__(self, dest, cond=None, l1=None, l2=None):
+        super().__init__()
+        self.dest = dest
+        self.cond = cond
+        self.l1 = l1
+        self.l2 = l2
+
+    def __str__(self):
+        if self.cond is None:
+            # 無条件分岐
+            return f"br label %L{self.dest}"
+        else:
+            # 条件分岐
+            return f"br i1 {self.cond}, label %L{self.l1}, label %L{self.l2}"
+
+
+class LLVMCodeLabel(LLVMCode):
+    ''' label: ラベル
+            L{label_id}:
+    '''
+
+    def __init__(self, label_id):
+        super().__init__()
+        self.label_id = label_id
+
+    def __str__(self):
+        return f"L{self.label_id}:"
+
