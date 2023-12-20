@@ -4,7 +4,11 @@ define i32 @main() {
     %1 = call i32 (i8*, ...) @scanf(i8* getelementptr inbounds ([3 x i8], [3 x i8]* @.str.r, i64 0, i64 0), i32* @x)
     %2 = load i32, i32* @x, align 4
     %3 = icmp slt i32 %2, 0
+    br i1 %3, label %L0, label %L1
+ L0:
     %4 = load i32, i32* @x, align 4
+    br label %L1
+ L1:
     %5 = sub nsw i32 0, %4
     store i32 %5, i32* @x, align 4
     %6 = load i32, i32* @x, align 4
