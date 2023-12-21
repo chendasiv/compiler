@@ -113,11 +113,21 @@ def getRegister():
     ''' 新たなレジスタ番号をもつ Operand オブジェクトを返す '''
     return Operand(OType.NUMBERED_REG, val=fundefs[-1].getNewRegNo())
 
+#### kadai5 ####
+# ラベルカウンタ
+current_label = 1
+def getNewLabel():
+    global current_label
+    label = f"{current_label}" 
+    current_label += 1
+    return label
+
+
 #################################################################
 # ここから先に構文規則を書く
 #################################################################
 
-#### kadai4 ####
+
 def p_program(p):
     '''
     program : PROGRAM IDENT SEMICOLON outblock PERIOD
@@ -141,7 +151,7 @@ def p_program(p):
             LLVMCodeCallScanf.printDeclare(fout)
             LLVMCodeCallScanf.printFormat(fout)
 
-#### kadai4 ####
+
 def p_outblock(p):
     '''
     outblock : var_decl_part subprog_decl_part outblock_act statement
@@ -151,7 +161,6 @@ def p_outblock(p):
     # 還元時に「ret i32 0」命令を追加
     addCode(LLVMCodeRet('i32', Operand(OType.CONSTANT, val=0)))
 
-#### kadai4 ####
 def p_outblock_act(p):
     '''
     outblock_act :
@@ -245,7 +254,7 @@ def p_statement(p):
     '''
     # print("statement")
 
-#### kadai4 ####
+
 def p_assignment_statement(p):
     '''
     assignment_statement : IDENT ASSIGN expression
@@ -271,12 +280,21 @@ def p_if_statement(p):
     if_statement : IF condition if_act1 THEN statement else_statement
     '''
     # print("if_statement")
+    # end_label = current_label - 1
+    # addCode(LLVMCodeBr(l1=end_label))
+    # addCode(LLVMCodeLabel(end_label))
+    
 
 def p_if_act1(p):
     '''
     if_act1 : 
     '''
     cond = p[-1]
+    l1 = getNewLabel()
+    l2 = getNewLabel()
+
+    addCode(LLVMCodeBr(cond=cond, l1=l1, l2=l2))
+    addCode(LLVMCodeLabel(l1))
 
 
 #### kadai5 ####
@@ -285,7 +303,21 @@ def p_else_statement(p):
     else_statement : ELSE statement
                    |
     '''
+    
+    if len(p) == 1:
+    # else 文がない場合
+        end_label = current_label - 1
+        addCode(LLVMCodeBr(l1=end_label))
+        addCode(LLVMCodeLabel(end_label))
+    else:
+    # else 文がある場合
+        end_label = getNewLabel()
+        else_label = current_label - 2
+        addCode(LLVMCodeBr(l1=end_label))
+        addCode(LLVMCodeLabel(else_label))
+    
     # print("else_statement")
+
 
 #### kadai5 ####
 def p_while_statement(p):
@@ -380,6 +412,11 @@ def p_condition(p):
               | expression GE expression
     '''
     # print("condition")
+    arg1 = p[1]
+    arg2 = p[3]
+    retval = getRegister()
+    addCode(LLVMCodeIcmp(retval, CmpType.getCmpType(p[2]), arg1, arg2))
+    p[0] = retval
 
 
 def p_expression(p):
