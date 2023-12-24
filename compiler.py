@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from re import L
 import sys
 
 import ply.lex as lex
@@ -238,8 +239,17 @@ def p_statement_list(p):
     statement_list : statement_list SEMICOLON statement
                    | statement
     '''
+    # print(len(p))
+    # print(p[:])
     # print("statement_list")
+
+    # *********** #
+    if len(p) == 2:
+        p[0] = p[1]
+    else:
+        p[0] = p[3]
     
+
 def p_statement(p):
     '''
     statement : assignment_statement
@@ -252,6 +262,7 @@ def p_statement(p):
               | read_statement
               | write_statement
     '''
+
     # print("statement")
 
 
@@ -277,44 +288,52 @@ def p_assignment_statement(p):
 #### kadai5 ####
 def p_if_statement(p):
     '''
-    if_statement : IF condition if_act1 THEN statement else_statement
+    if_statement : IF condition if_act1 THEN statement if_act2 else_statement
     '''
+    # for i in range(len(p)):
+    #     print(p[i])
     # print("if_statement")
-    # end_label = current_label - 1
-    # addCode(LLVMCodeBr(l1=end_label))
-    # addCode(LLVMCodeLabel(end_label))
-    
 
+#### kadai5 ####
 def p_if_act1(p):
     '''
     if_act1 : 
     '''
     cond = p[-1]
-    l1 = getNewLabel()
-    l2 = getNewLabel()
+    then_case = getNewLabel()
+    else_case = getNewLabel()
+    end_case = getNewLabel()
 
-    addCode(LLVMCodeBr(cond=cond, l1=l1, l2=l2))
-    addCode(LLVMCodeLabel(l1))
+    addCode(LLVMCodeBr(cond=cond, l1=then_case, l2=else_case))
+    addCode(LLVMCodeLabel(then_case))
 
+    # if_act1 に else と end のラベルを格納
+    p[0] = else_case + '_' + end_case
 
+#### kadai5 ####
+def p_if_act2(p):
+    '''
+    if_act2 :
+    '''
+    # if_act1 に格納された else と end ラベルを取得
+    cases = p[-3].split('_')
+    else_case = cases[0]
+    end_case = cases[1]
+
+    addCode(LLVMCodeBr(l1=end_case))
+    addCode(LLVMCodeLabel(else_case))
+    p[0] = end_case
+    
 #### kadai5 ####
 def p_else_statement(p):
     '''
     else_statement : ELSE statement
                    |
     '''
-    
-    if len(p) == 1:
-    # else 文がない場合
-        end_label = current_label - 1
-        addCode(LLVMCodeBr(l1=end_label))
-        addCode(LLVMCodeLabel(end_label))
-    else:
-    # else 文がある場合
-        end_label = getNewLabel()
-        else_label = current_label - 2
-        addCode(LLVMCodeBr(l1=end_label))
-        addCode(LLVMCodeLabel(else_label))
+    # end ラベルを取得
+    end_case = p[-1]
+    addCode(LLVMCodeBr(l1=end_case))
+    addCode(LLVMCodeLabel(end_case))
     
     # print("else_statement")
 
@@ -322,9 +341,38 @@ def p_else_statement(p):
 #### kadai5 ####
 def p_while_statement(p):
     '''
-    while_statement : WHILE condition DO statement
+    while_statement : WHILE while_act1 condition while_act2 DO statement
     '''
+    while_case = p[2]
+    end_case = p[4]
+    addCode(LLVMCodeBr(l1=while_case))
+    addCode(LLVMCodeLabel(end_case))
+
     # print("while_statement")
+
+#### kadai5 ####
+def p_while_act1(p):
+    '''
+    while_act1 :
+    '''
+    while_case = getNewLabel()
+    addCode(LLVMCodeBr(l1=while_case))
+    addCode(LLVMCodeLabel(while_case))
+    p[0] = while_case
+
+#### kadai5 ####
+def p_while_act2(p):
+    '''
+    while_act2 :
+    '''
+    cond = p[-1]
+    do_case = getNewLabel()
+    end_case = getNewLabel()
+
+    addCode(LLVMCodeBr(cond=cond, l1=do_case, l2=end_case))
+    addCode(LLVMCodeLabel(do_case))
+    p[0] = end_case
+
 
 #### kadai5 ####
 def p_for_statement(p):
@@ -332,6 +380,7 @@ def p_for_statement(p):
     for_statement : FOR IDENT ASSIGN expression for_act1 TO expression DO statement
     '''
 
+#### kadai5 ####
 def p_for_act1(p):
     '''
     for_act1 :
@@ -366,6 +415,8 @@ def p_block_statement(p):
     '''
     block_statement : BEGIN statement_list END
     '''
+    p[0] = p[-2]
+
     # print("block_statement")
 
 def p_read_statement(p):

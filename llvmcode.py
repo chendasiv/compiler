@@ -31,6 +31,7 @@ class CmpType(Enum):
         elif self == CmpType.SLT:	return "slt"
         elif self == CmpType.SLE:	return "sle"
 
+        
 ##
 ## LLVMコード
 ##
@@ -204,6 +205,7 @@ class LLVMCodeCallScanf(LLVMCode):
     def __str__(self):
         return f"{self.res} = call i32 (i8*, ...) @scanf(i8* getelementptr inbounds ([3 x i8], [3 x i8]* @.str.r, i64 0, i64 0), i32* {self.arg})"
 
+#### kadai5 ####
 class LLVMCodeIcmp(LLVMCode):
     ''' icmp 命令
             {retval} = icmp {cond} i32 {op1}, {op2}
@@ -220,30 +222,30 @@ class LLVMCodeIcmp(LLVMCode):
         cond_str = self.cond.__str__()
         return f"{self.retval} = icmp {cond_str} i32 {self.op1}, {self.op2}"
 
+#### kadai5 ####
 class LLVMCodeBr(LLVMCode):
     ''' br 命令
             br label {dest}                       # 無条件分岐
             br i1 {cond}, label {l1}, label {l2}  # 条件分岐
     '''
 
-    def __init__(self, dest, cond=None, l1=None, l2=None):
+    def __init__(self, cond:Operand=None, l1=None, l2=None):
         super().__init__()
-        self.dest = dest
         self.cond = cond
         self.l1 = l1
         self.l2 = l2
 
     def __str__(self):
-        if self.cond is None:
-            # 無条件分岐
-            return f"br label %L{self.dest}"
-        else:
+        if self.cond:
             # 条件分岐
             return f"br i1 {self.cond}, label %L{self.l1}, label %L{self.l2}"
-
-
+        else:
+            # 無条件分岐
+            return f"br label %L{self.l1}"
+        
+#### kadai5 ####
 class LLVMCodeLabel(LLVMCode):
-    ''' label: ラベル
+    ''' ラベル
             L{label_id}:
     '''
 
@@ -253,4 +255,4 @@ class LLVMCodeLabel(LLVMCode):
 
     def __str__(self):
         return f"L{self.label_id}:"
-
+    
