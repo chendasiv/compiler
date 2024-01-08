@@ -299,15 +299,15 @@ def p_if_act1(p):
     '''
     if_act1 : 
     '''
-    cond = p[-1]
-    then_case = getNewLabel()
-    else_case = getNewLabel()
-    end_case = getNewLabel()
+    cond = p[-1]                # 条件判定
+    then_case = getNewLabel()   # then 節のためのラベル
+    else_case = getNewLabel()   # else 節のためのラベル
+    end_case = getNewLabel()    # 分岐終了のためのラベル
 
     addCode(LLVMCodeBr(cond=cond, l1=then_case, l2=else_case))
     addCode(LLVMCodeLabel(then_case))
 
-    # if_act1 に else と end のラベルを格納
+    # if_act1 に else と end ラベルを格納
     p[0] = else_case + '_' + end_case
 
 #### kadai5 ####
@@ -322,6 +322,8 @@ def p_if_act2(p):
 
     addCode(LLVMCodeBr(l1=end_case))
     addCode(LLVMCodeLabel(else_case))
+
+    # end ラベルを格納
     p[0] = end_case
     
 #### kadai5 ####
@@ -345,7 +347,11 @@ def p_while_statement(p):
     '''
     while_case = p[2]
     end_case = p[4]
+
+    # 条件判定へ戻る
     addCode(LLVMCodeBr(l1=while_case))
+
+    # 比較結果が 0 の場合の分岐 (ループ終了)
     addCode(LLVMCodeLabel(end_case))
 
     # print("while_statement")
@@ -355,9 +361,12 @@ def p_while_act1(p):
     '''
     while_act1 :
     '''
+    # while ループ分岐
     while_case = getNewLabel()
     addCode(LLVMCodeBr(l1=while_case))
     addCode(LLVMCodeLabel(while_case))
+
+    # ラベルを格納
     p[0] = while_case
 
 #### kadai5 ####
@@ -365,20 +374,50 @@ def p_while_act2(p):
     '''
     while_act2 :
     '''
-    cond = p[-1]
-    do_case = getNewLabel()
-    end_case = getNewLabel()
+    
+    cond = p[-1]              # 条件判定
+    do_case = getNewLabel()   # do 節のためのラベル
+    end_case = getNewLabel()  # ループ終了のためのラベル
 
+    # 条件判定の結果による分岐
     addCode(LLVMCodeBr(cond=cond, l1=do_case, l2=end_case))
+
+    # 比較結果が 1 の場合の分岐
     addCode(LLVMCodeLabel(do_case))
+    
+    # ラベルを格納
     p[0] = end_case
 
 
 #### kadai5 ####
 def p_for_statement(p):
     '''
-    for_statement : FOR IDENT ASSIGN expression for_act1 TO expression DO statement
+    for_statement : FOR IDENT ASSIGN expression for_act1 TO expression for_act2 DO statement
     '''
+    ### IDENT の値をインクリメントする操作 ###
+    # load 命令で IDENT の値を取得
+    ptr = Operand(OType.GLOBAL_VAR, name=p[2])
+    arg1 = getRegister()
+    addCode(LLVMCodeLoad(arg1, ptr))
+
+    # 加算を行う
+    arg2 = 1
+    retval = getRegister()
+    addCode(LLVMCodeAdd(retval, arg1, arg2))
+
+    # 加算した結果を IDENT にストア
+    addCode(LLVMCodeStore(retval, ptr))
+    ##########
+    for_case = p[5]
+    end_case = p[8]
+
+    # 条件判定へ戻る
+    addCode(LLVMCodeBr(l1=for_case))
+
+    # 比較結果が 0 の場合の分岐 (ループ終了)
+    addCode(LLVMCodeLabel(end_case))
+
+    # print("for_statement", p[:])
 
 #### kadai5 ####
 def p_for_act1(p):
@@ -390,7 +429,47 @@ def p_for_act1(p):
         print("No match for", p[-3])
     else:
         print(t.__str__())
-    # print("for_statement", p[-3])
+
+    if t.scope == Scope.GLOBAL_VAR:
+        ptr = Operand(OType.GLOBAL_VAR, name=t.name)
+
+    # 代入文に対する store 命令
+    retval = p[-1]
+    addCode(LLVMCodeStore(retval, ptr))
+
+    # for ループ分岐
+    for_case = getNewLabel()
+    addCode(LLVMCodeBr(l1=for_case))
+    addCode(LLVMCodeLabel(for_case))
+
+    # ラベルを格納
+    p[0] = for_case
+
+#### kadai5 ####
+def p_for_act2(p):
+    '''
+    for_act2 :
+    '''
+    # load 命令で IDENT の値を取得
+    ptr = Operand(OType.GLOBAL_VAR, name=p[-6])
+    arg1 = getRegister()
+    addCode(LLVMCodeLoad(arg1, ptr))
+
+    # 比較演算子 <=　用いて条件判定を行う
+    arg2 = p[-1]
+    retval = getRegister()
+    addCode(LLVMCodeIcmp(retval, CmpType.SLE, arg1, arg2))
+
+    # 条件判定の結果による分岐
+    to_case = getNewLabel()
+    end_case = getNewLabel()
+    addCode(LLVMCodeBr(cond=retval, l1=to_case, l2=end_case))
+
+    # 比較結果が 1 の場合の分岐
+    addCode(LLVMCodeLabel(to_case))
+
+    # ラベルを格納
+    p[0] = end_case
 
 
 def p_proc_call_statement(p):
