@@ -183,7 +183,7 @@ class LLVMCodeCallPrintf(LLVMCode):
 
 
 class LLVMCodeCallScanf(LLVMCode):
-    ''' scanf関数呼び出し専用の call命令
+    ''' scanf関数呼び出し専用の call 命令
              {res} = call i32 (i8*, ...) @scanf(i8* getelementptr inbounds ([3 x i8], [3 x i8]* @.str.r, i64 0, i64 0), i32* {arg})
     '''
 
@@ -205,7 +205,7 @@ class LLVMCodeCallScanf(LLVMCode):
     def __str__(self):
         return f"{self.res} = call i32 (i8*, ...) @scanf(i8* getelementptr inbounds ([3 x i8], [3 x i8]* @.str.r, i64 0, i64 0), i32* {self.arg})"
 
-#### kadai5 ####
+
 class LLVMCodeIcmp(LLVMCode):
     ''' icmp 命令
             {retval} = icmp {cond} i32 {op1}, {op2}
@@ -222,7 +222,7 @@ class LLVMCodeIcmp(LLVMCode):
         cond_str = self.cond.__str__()
         return f"{self.retval} = icmp {cond_str} i32 {self.op1}, {self.op2}"
 
-#### kadai5 ####
+
 class LLVMCodeBr(LLVMCode):
     ''' br 命令
             br label {dest}                       # 無条件分岐
@@ -243,7 +243,7 @@ class LLVMCodeBr(LLVMCode):
             # 無条件分岐
             return f"br label %L{self.l1}"
         
-#### kadai5 ####
+
 class LLVMCodeLabel(LLVMCode):
     ''' ラベル
             L{label_id}:
@@ -254,5 +254,34 @@ class LLVMCodeLabel(LLVMCode):
         self.label_id = label_id
 
     def __str__(self):
-        return f"L{self.label_id}:"
+        return f"\n  L{self.label_id}:"
     
+##### kadai6 #####
+class LLVMCodeCallProc(LLVMCode):
+    ''' call 命令
+        r = call i32 f([i32 v]*)
+        call void f([i32 v]*)      # void function
+    '''
+
+    def __init__(self, res:Operand=None, arg:Operand=None):
+        super().__init__()
+        self.res = res
+        self.arg = arg
+
+    def __str__(self):
+        if self.res == None:
+            return f"call void {self.arg}()"
+        else:
+            return f"{self.res} = call i32 {self.arg}"
+
+
+##### kadai6 #####
+class LLVMCodeLocal(LLVMCode):
+    ''' alloca 命令
+        r = alloca i32, align 4  # r=OType.NAMED_REG
+    '''
+    def __init__(self, res:Operand):
+        self.res = res
+
+    def __str__(self):
+        return f"{self.res} = alloca i32, align 4"

@@ -114,7 +114,6 @@ def getRegister():
     ''' 新たなレジスタ番号をもつ Operand オブジェクトを返す '''
     return Operand(OType.NUMBERED_REG, val=fundefs[-1].getNewRegNo())
 
-#### kadai5 ####
 # ラベルカウンタ
 current_label = 1
 def getNewLabel():
@@ -122,7 +121,6 @@ def getNewLabel():
     label = f"{current_label}" 
     current_label += 1
     return label
-
 
 #################################################################
 # ここから先に構文規則を書く
@@ -184,10 +182,13 @@ def p_var_decl_list(p):
     '''
     # print("var_decl_list")
 
+##### kadai6 #####
 def p_var_decl(p):
     '''
     var_decl : VAR id_list
     '''
+    if varscope == Scope.LOCAL_VAR:
+        addCode(LLVMCodeLocal(Operand(OType.NAMED_REG, name=p[2])))
     # print("var_decl")
 
 def p_subprog_decl_part(p):
@@ -226,13 +227,32 @@ def p_proc_name(p):
     varscope = Scope.LOCAL_VAR
     # print("proc_name", p[1])
 
+
+##### kadai6 #####
 def p_inblock(p):
     '''
-    inblock : var_decl_part statement
+    inblock : var_decl_part inblock_act statement
     '''
     symtable.delete()
     print(symtable.rows)
+
+    # 還元時に「ret void」命令を追加
+    addCode(LLVMCodeRet('void'))
     # print("inblock")
+
+##### kadai6 #####
+def p_inblock_act(p):
+    '''
+    inblock_act :
+    '''
+    # symtable の末尾辿って手続き名を取得
+    for t in symtable.rows[::-1]:
+        if Scope.PROC == t.scope:
+            procedure_name = t.name
+
+    # 手続きに対する関数定義オブジェクトを生成
+    fundefs.append(Fundef(procedure_name, 'void'))
+
 
 def p_statement_list(p):
     '''
@@ -262,7 +282,6 @@ def p_statement(p):
               | read_statement
               | write_statement
     '''
-
     # print("statement")
 
 
@@ -285,7 +304,7 @@ def p_assignment_statement(p):
 
     # print("assignment_statement")
 
-#### kadai5 ####
+
 def p_if_statement(p):
     '''
     if_statement : IF condition if_act1 THEN statement if_act2 else_statement
@@ -294,7 +313,7 @@ def p_if_statement(p):
     #     print(p[i])
     # print("if_statement")
 
-#### kadai5 ####
+
 def p_if_act1(p):
     '''
     if_act1 : 
@@ -310,7 +329,7 @@ def p_if_act1(p):
     # if_act1 に else と end ラベルを格納
     p[0] = else_case + '_' + end_case
 
-#### kadai5 ####
+
 def p_if_act2(p):
     '''
     if_act2 :
@@ -325,8 +344,8 @@ def p_if_act2(p):
 
     # end ラベルを格納
     p[0] = end_case
-    
-#### kadai5 ####
+
+
 def p_else_statement(p):
     '''
     else_statement : ELSE statement
@@ -340,7 +359,6 @@ def p_else_statement(p):
     # print("else_statement")
 
 
-#### kadai5 ####
 def p_while_statement(p):
     '''
     while_statement : WHILE while_act1 condition while_act2 DO statement
@@ -356,7 +374,7 @@ def p_while_statement(p):
 
     # print("while_statement")
 
-#### kadai5 ####
+
 def p_while_act1(p):
     '''
     while_act1 :
@@ -369,7 +387,7 @@ def p_while_act1(p):
     # ラベルを格納
     p[0] = while_case
 
-#### kadai5 ####
+
 def p_while_act2(p):
     '''
     while_act2 :
@@ -389,7 +407,6 @@ def p_while_act2(p):
     p[0] = end_case
 
 
-#### kadai5 ####
 def p_for_statement(p):
     '''
     for_statement : FOR IDENT ASSIGN expression for_act1 TO expression for_act2 DO statement
@@ -419,7 +436,7 @@ def p_for_statement(p):
 
     # print("for_statement", p[:])
 
-#### kadai5 ####
+
 def p_for_act1(p):
     '''
     for_act1 :
@@ -445,7 +462,7 @@ def p_for_act1(p):
     # ラベルを格納
     p[0] = for_case
 
-#### kadai5 ####
+
 def p_for_act2(p):
     '''
     for_act2 :
@@ -478,7 +495,8 @@ def p_proc_call_statement(p):
     '''
     # print("proc_call_statement")
 
-
+##### kadai6 ####
+# call 命令
 def p_proc_call_name(p):
     '''
     proc_call_name : IDENT
@@ -488,6 +506,11 @@ def p_proc_call_name(p):
         print("No match for", p[1])
     else:
         print(t.__str__())
+
+    if t.scope == Scope.PROC:
+        ptr = Operand(OType.GLOBAL_VAR, name=t.name)
+
+    addCode(LLVMCodeCallProc(res=None,arg=ptr))
     # print("proc_call_name", p[1])
 
 def p_block_statement(p):
@@ -531,7 +554,7 @@ def p_null_statement(p):
     '''
     # print("null")
 
-#### kadai5 ####
+
 def p_condition(p):
     '''
     condition : expression EQ expression
@@ -653,6 +676,7 @@ def p_id_list(p):
 
     symtable.insert(x, varscope)
     print(symtable.rows)
+    p[0] = x
     # print("id_list", x,)
 
 
